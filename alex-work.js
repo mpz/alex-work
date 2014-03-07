@@ -23,13 +23,14 @@ var sheets = {
 //
 
 // Переменные на листе "Настройка"
-//
-var settingsValues = {
-    // Начальная позиция (ряд) последнего заказа
-    lastOrderRowIndex: sheets.SettingsList.getRange(32, 9).getValue(),
-    // Количество товаров в последнем заказе
-    lastOrderProductsCount: sheets.SettingsList.getRange(32, 10).getValue()
-};
+function settingsValues(){
+    return {
+        // Начальная позиция (ряд) последнего заказа
+        lastOrderRowIndex: sheets.SettingsList.getRange(32, 9).getValue(),
+        // Количество товаров в последнем заказе
+        lastOrderProductsCount: sheets.SettingsList.getRange(32, 10).getValue()
+    }
+}
 
 // Переменные на листе "Закупка"
 //
@@ -867,8 +868,8 @@ function balance_no_product() {
 
 function balance_order_last(cal_r) {
     var begin = cal_r + 2; // Начало блока с информацией о последнем заказе
-    var position_last = settingsValues.lastOrderRowIndex + shift_data;
-    var number_last = settingsValues.lastOrderProductsCount;
+    var position_last = settingsValues().lastOrderRowIndex + shift_data;
+    var number_last = settingsValues().lastOrderProductsCount;
     var end = position_last + number_last - 1;
 
     sheets.BalanceList.getRange(begin, 5).setFontSize(10);
@@ -888,7 +889,7 @@ function balance_order_other(cal_r) {
     var row = begin - 1;
 
     var start = shift_per + shift_data;
-    var end = settingsValues.lastOrderRowIndex + shift_data - 1;
+    var end = settingsValues().lastOrderRowIndex + shift_data - 1;
 
     balance_header(row);
 
