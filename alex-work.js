@@ -272,17 +272,14 @@ function onEdit(event) {
         // Добавление новых платежей
         if (pay.sum_user.getValue() == "") {
             pay.sum_user.setValue("Введите сумму");
-        } else {
-            if ((col == 3) && (row == 3) && (pay.oper_user.getValue() != "Выберите операцию")) {
+        } else if ((col == 3) && (row == 3) && (pay.oper_user.getValue() != "Выберите операцию")) {
                 addNewPayment();
-            }
         }
+
         if (pay.oper_user.getValue() == "") {
             pay.oper_user.setValue("Выберите операцию");
-        } else {
-            if ((col == 4) && (row == 3) && (pay.sum_user.getValue() != "Введите сумму")) {
-                addNewPayment();
-            }
+        } else if ((col == 4) && (row == 3) && (pay.sum_user.getValue() != "Введите сумму")) {
+            addNewPayment();
         }
 
         // Оповещение о неверном вводе платежа
@@ -911,10 +908,6 @@ function balance_order_other(cal_r) {
 function balance_clear() {
     var last_r = sheets.BalanceList.getLastRow();
 
-    // Разделяет ячейки - Пока не добаят возможность выбирать цвета границ, не использовать!
-    //sheets.BalanceList.getRange(1, 5, last_r, 13).breakApart();
-    //heets.bal.getRange(1, 5, last_r, 13).setBorder(top, left, bottom, right, vertical, horizontal);
-
     sheets.BalanceList.getRange(1, 5, last_r, 13).setBackground("white"); // Сброс цвета ячеек
     // Установка размера шрифтов
     sheets.BalanceList.getRange(1, 5, last_r, 1).setFontSize(8);
@@ -922,11 +915,4 @@ function balance_clear() {
     sheets.BalanceList.getRange(1, 17, last_r, 1).setFontSize(8);
     // Очищает ячейки
     sheets.BalanceList.getRange(1, 5, last_r, 13).clearContent();
-}
-
-function test() {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-
-    var a = sheets.PaymentsList.getRange(10, pay.date.getValue());
-
 }
