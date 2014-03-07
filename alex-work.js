@@ -433,7 +433,7 @@ function showCurrentOrder() {
     var last_r = sheets.PurchaseList.getLastRow() - shift_per + 1; // Общее количество рядов без учёта "шапки"
     var selected_option = purchaseValues.ord_user.getValue(); // Выбранный пользователем заказ
 
-    var position, first, number, formula;
+    var position, number, formula;
 
     // Открывает все ряды
     sheets.PurchaseList.showRows(shift_per, last_r);
@@ -460,7 +460,7 @@ function showCurrentOrder() {
     var order_row = findOrderRow(selected_option);
     if(order_row){
         position = sheets.PurchaseList.getRange(a, purchaseValues.article).getRowIndex(); // Позиция (ряд) на которой находится информация о заказе
-        first = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Ряд, с которого начинается заказ
+        var first_row_of_product_in_order = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Ряд, с которого начинается заказ
         purchaseValues.pos.setValue(position);
         number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
 
@@ -477,13 +477,14 @@ function showCurrentOrder() {
 
 
         // Проверка, выбран ли заказ
-        if (first != "") {
+        if (first_row_of_product_in_order != "") {
             status_processing_check();
         }
     }
 }
 
-// Проверка для переноса данных с листа "Закупка" на лист "Экспорт"
+// Создаёт записи в листе экспорт об измении статусов тех товаров, 
+// которые есть в наличие на листе "Закупка"
 function status_processing_check() {
     var summ = purchaseValues.stat_check.getValue(); // Сумма всех числовых меток статусов заказа
     var summ_round = summ.toFixed(2); // Округлённая сумма всех числовых меток статусов заказа
@@ -497,7 +498,6 @@ function status_processing_check() {
     var mark_a = 0,
         mark_b = 0; // Метки, необходимые для определения действий со статусами заказов
     var status_check; // Переменная для проверки статуса
-    var a;
 
     // Закрытие заказа
     if ((order_status != "0") && (order_status != "1") && (summ_round == result_round)) {
@@ -521,7 +521,7 @@ function status_processing_check() {
             sheets.PurchaseList.getRange(first, purchaseValues.status_mark, number).clearContent();
             if (mark_b == 0) {
                 // Проставление меток для отсутствующих товаров
-                for (a = first; a < first + number; a++) {
+                for (var a = first; a < first + number; a++) {
                     status_check = sheets.PurchaseList.getRange(a, purchaseValues.status).getValue();
                     if ((status_check == "Товар отсутствует") || (status_check == "Отсутствует нужный цвет / размер") || (status_check == "Возврат товара") || (status_check == "Деньги возвращены")) {
                         sheets.PurchaseList.getRange(a, purchaseValues.status_mark).setValue("1,01");
