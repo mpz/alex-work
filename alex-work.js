@@ -274,14 +274,14 @@ function onEdit(event) {
             pay.sum_user.setValue("Введите сумму");
         } else {
             if ((col == 3) && (row == 3) && (pay.oper_user.getValue() != "Выберите операцию")) {
-                payment_new();
+                addNewPayment();
             }
         }
         if (pay.oper_user.getValue() == "") {
             pay.oper_user.setValue("Выберите операцию");
         } else {
             if ((col == 4) && (row == 3) && (pay.sum_user.getValue() != "Введите сумму")) {
-                payment_new();
+                addNewPayment();
             }
         }
 
@@ -302,7 +302,7 @@ function onEdit(event) {
     if (sheet_name == "Закупка") {
         // Выбор номера заказа на листе "Закупка"
         if ((row == 3) && (col == 3)) {
-            order_select();
+            showCurrentOrder();
         }
 
         if (col == purchaseValues.weight) {
@@ -387,22 +387,22 @@ function onEdit(event) {
 }
 
 // Добавление новых платежей
-function payment_new() {
+function addNewPayment() {
     var today = Utilities.formatDate((new Date()), Session.getTimeZone(), "dd.MM.yyyy");
 
     var sheet = sheets.PaymentsList;
-    var num_r = getFilledRowsCount(sheet);
-    writeFilledRowsCount(sheet, num_r);
+    var row_count = getFilledRowsCount(sheet);
+    writeFilledRowsCount(sheet, row_count);
 
     var arr, text, summ; // Переменные для работы с рядами
     var counter = 1;
 
     // Добавляет запись о пользовательском платеже на лист "Платежи"
-    sheets.PaymentsList.getRange(num_r, pay.id).setValue("x");
-    sheets.PaymentsList.getRange(num_r, pay.date).setValue(today);
-    sheets.PaymentsList.getRange(num_r, pay.sum).setValue(pay.sum_user.getValue());
-    sheets.PaymentsList.getRange(num_r, pay.operation).setValue(pay.oper_user.getValue() + ".");
-    sheets.PaymentsList.getRange(num_r, pay.history_row).setValue(his.last_fin.getValue() + 1);
+    sheets.PaymentsList.getRange(row_count, pay.id).setValue("x");
+    sheets.PaymentsList.getRange(row_count, pay.date).setValue(today);
+    sheets.PaymentsList.getRange(row_count, pay.sum).setValue(pay.sum_user.getValue());
+    sheets.PaymentsList.getRange(row_count, pay.operation).setValue(pay.oper_user.getValue() + ".");
+    sheets.PaymentsList.getRange(row_count, pay.history_row).setValue(his.last_fin.getValue() + 1);
 
     // Добавляет запись на лист "История" (Финансы)
     text = pay.oper_user.getValue();
@@ -417,53 +417,58 @@ function payment_new() {
     pay.num_r.setValue(pay.num_r.getValue() + 1);
 }
 
-// Выбор заказа на листе "Закупка" --------------------------------------- Работает
-function order_select() {
-    var last_r = sheets.PurchaseList.getLastRow() - shift_per + 1; // Общее количество рядов без учёта "шапки"
-    var order_check = purchaseValues.ord_user.getValue(); // Выбранный пользователем заказ
-
-    var order, position, first, number;
-    var formula;
-    var a;
-
-    // Открывает все ряды
-    sheets.PurchaseList.showRows(shift_per, last_r);
-
-    // Проверка на содержимое ячейки, где должны быть номера заказа
-    if ((order_check == "Все") || (order_check == "")) {
+function showAllOrders(selected_option){
+    if ((selected_option == "Все") || (selected_option == "")) {
         // Удаляет все временные записи
         purchaseValues.ord_user.setValue("Все");
         purchaseValues.pos.clearContent();
         purchaseValues.ord_cost.clearContent();
         purchaseValues.stat_check.clearContent();
-    } else {
-        for (a = shift_per; a < 59; a++) {
-            order = sheets.PurchaseList.getRange(a, purchaseValues.order_list).getValue(); // Текущий заказ из списка
-            if (order == order_check) {
-                position = sheets.PurchaseList.getRange(a, purchaseValues.article).getRowIndex(); // Позиция (ряд) на которой находится информация о заказе
-                first = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Ряд, с которого начинается заказ
-                purchaseValues.pos.setValue(position);
-                number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
+        return true;
+    }
+}
 
-                // Если это не первый ряд, прячет предыдущие ряды
-                if (position != shift_per) {
-                    sheets.PurchaseList.hideRows(shift_per, first - shift_per);
-                }
+// Выбор заказа на листе "Закупка"
+function showCurrentOrder() {
+    var last_r = sheets.PurchaseList.getLastRow() - shift_per + 1; // Общее количество рядов без учёта "шапки"
+    var selected_option = purchaseValues.ord_user.getValue(); // Выбранный пользователем заказ
 
-                sheets.PurchaseList.hideRows(first + number, last_r + shift_per - first - number);
-                formula = "=SUM(R" + first + ":R" + (first + number - 1) + ")"; // Формула для рассчёта стоимости заказа
-                purchaseValues.ord_cost.setFormula(formula);
-                sheets.PurchaseList.getRange(first, purchaseValues.order_cost).setFormula(formula);
-                purchaseValues.stat_check.setFormula("=SUM(AH" + first + ":AH" + (first + number - 1) + ")");
+    var order, position, first, number, formula;
 
-                break;
+    // Открывает все ряды
+    sheets.PurchaseList.showRows(shift_per, last_r);
+
+    if(showAllOrders(selected_option)){
+        return
+    }
+
+    // Проверка на содержимое ячейки, где должны быть номера заказа
+    for (var a = shift_per; a < 59; a++) {
+        order = sheets.PurchaseList.getRange(a, purchaseValues.order_list).getValue(); // Текущий заказ из списка
+        if (order == order_id) {
+            position = sheets.PurchaseList.getRange(a, purchaseValues.article).getRowIndex(); // Позиция (ряд) на которой находится информация о заказе
+            first = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Ряд, с которого начинается заказ
+            purchaseValues.pos.setValue(position);
+            number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
+
+            // Если это не первый ряд, прячет предыдущие ряды
+            if (position != shift_per) {
+                sheets.PurchaseList.hideRows(shift_per, first - shift_per);
             }
 
-            // Если нет совпадений по номерам заказов, удаляет формулы
-            purchaseValues.pos.clearContent();
-            purchaseValues.ord_cost.clearContent();
-            purchaseValues.stat_check.clearContent();
+            sheets.PurchaseList.hideRows(first + number, last_r + shift_per - first - number);
+            formula = "=SUM(R" + first + ":R" + (first + number - 1) + ")"; // Формула для рассчёта стоимости заказа
+            purchaseValues.ord_cost.setFormula(formula);
+            sheets.PurchaseList.getRange(first, purchaseValues.order_cost).setFormula(formula);
+            purchaseValues.stat_check.setFormula("=SUM(AH" + first + ":AH" + (first + number - 1) + ")");
+
+            break;
         }
+
+        // Если нет совпадений по номерам заказов, удаляет формулы
+        purchaseValues.pos.clearContent();
+        purchaseValues.ord_cost.clearContent();
+        purchaseValues.stat_check.clearContent();
     }
 
     // Проверка, выбран ли заказ
@@ -540,7 +545,6 @@ function status_change() {
     var mark = "1"; // Маркер статуса по умолчанию (для обычных статусов)
     var marker_check; // Проверка маркера
     var count = 1;
-    var a;
 
     // В зависимости от выбранного статуса задаёт метку
     if ((status_user == "Товар отсутствует") || (status_user == "Отсутствует нужный цвет / размер") || (status_user == "Возврат товара") || (status_user == "Деньги возвращены")) {
@@ -549,7 +553,7 @@ function status_change() {
         mark = "1,0099";
     }
 
-    for (a = first; a < first + number; a++) {
+    for (var a = first; a < first + number; a++) {
         // Проверка на наличие маркера
         marker_check = sheets.PurchaseList.getRange(a, purchaseValues.status_mark).getValue();
         if (marker_check == "") {
