@@ -116,39 +116,41 @@ var data = {
 
 // *** Сервисные скрипты
 
-// Подсчёт количества заполненных рядов на листах "Закупка" и "Платежи" -------------------------------------------- Работает
-function number_row(sheet) {
-    var a;
+// Подсчёт количества заполненных рядов на листах "Закупка" и "Платежи"
 
-    //var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Платежи"); // ------------------------------ Проверка
-
-    if (sheet.getName() == sheets.PurchaseList.getName()) {
-        num_r = purchaseValues.num_r.getValue() + shift_per;
-    } else {
-        num_r = pay.num_r.getValue() + shift_per;
-    }
-
-    for (a = num_r; a < 1001; a++) {
-        if ((sheet.getRange(a, 1).getValue() != "") || (sheet.getRange(a, 2).getValue() != "")) {
-            num_r = num_r + 1;
-        } else {
-            break;
-        }
+function writeFilledRowsCount(sheet, rows_count){
+    if(!rows_count){
+        rows_count = getFilledRowsCount(sheet);
     }
 
     if (sheet.getName() == sheets.PurchaseList.getName()) {
-        purchaseValues.num_r.setValue(num_r - shift_per);
+        purchaseValues.num_r.setValue(rows_count - shift_per);
     } else {
         pay.num_r.setValue(num_r - shift_per);
     }
+}
 
-    return num_r;
+function getFilledRowsCount(sheet) {
+    var rows_count = pay.num_r.getValue() + shift_per;
+    if (sheet.getName() == sheets.PurchaseList.getName()) {
+        rows_count = purchaseValues.num_r.getValue() + shift_per;  
+    }
+
+    for (var a = rows_count; a < 1001; a++) {
+        if ((sheet.getRange(a, 1).getValue() != "") || (sheet.getRange(a, 2).getValue() != "")) {
+            rows_count ++;
+        } else {
+            return rows_count;
+        }
+    }
+    Browser.msgBox("Ошибка в переборе массива");
 }
 
 // Выявление уникальных номеров заказов на листе "Закупка" ------------------------------- Работает
 function order_number() {
     var sheet = sheets.PurchaseList;
-    var num_r = number_row(sheet);
+    var num_r = getFilledRowsCount(sheet);
+    writeFilledRowsCount(sheet, num_r);
 
     var a;
     var order_second_last, order_last; // Номера заказов у предпоследнего и последнего товаров
@@ -239,14 +241,14 @@ function onOpen() {
     // Проверка на наличие в таблице информации о товарах
     if (purchaseValues.art_first.getValue() != "<%product_article%>") {
         sheet = sheets.PurchaseList;
-        number_row(sheet);
+        writeFilledRowsCount(sheet);
         order_number();
     }
 
     // Проверка на наличие в таблице информации о платежах
     if (pay.id_first.getValue() != "<%transfer_id%>") {
         sheet = sheets.PaymentsList;
-        number_row(sheet);
+        writeFilledRowsCount(sheet);
     }
 }
 
@@ -394,7 +396,8 @@ function payment_new() {
     today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
 
     var sheet = sheets.PaymentsList;
-    var num_r = number_row(sheet);
+    var num_r = getFilledRowsCount(sheet);
+    writeFilledRowsCount(sheet, num_r);
 
     var arr, text, summ; // Переменные для работы с рядами
     var counter = 1;
