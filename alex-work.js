@@ -6,6 +6,31 @@ var shift_pay = 9;
 var shift_exp = 15;
 var shift_data = 8;
 
+function Sheet(title){
+    this.title = title;
+    this.list = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+    this._rangeExecute = function(options){
+        function getPosByIndex(index, arr){
+            if(arr.length==1){
+                return arr[0];
+            }
+            return arr[index];
+        }
+        var index = 0;
+        for(var ind in options.values){
+            range = this.list.getRange( getPosByIndex(index, options.rows),
+                                   getPosByIndex(index, options.cols) );
+            value = String(options.values[ind]);
+            eval("range." + options.method + "('" + value + "')" );
+            index++;
+        }
+    }
+}
+
+Payments = new Sheet("Платежи");
+
+
 // Переменные для листов
 
 var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -127,7 +152,7 @@ function writeFilledRowsCount(sheet, rows_count){
     if (sheet.getName() == sheets.PurchaseList.getName()) {
         purchaseValues.num_r.setValue(rows_count - shift_per);
     } else {
-        pay.num_r.setValue(num_r - shift_per);
+        pay.num_r.setValue(rows_count - shift_per);
     }
 }
 
@@ -395,11 +420,13 @@ function addNewPayment() {
     var counter = 1;
 
     // Добавляет запись о пользовательском платеже на лист "Платежи"
-    sheets.PaymentsList.getRange(row_count, pay.id).setValue("x");
-    sheets.PaymentsList.getRange(row_count, pay.date).setValue(today);
-    sheets.PaymentsList.getRange(row_count, pay.sum).setValue(pay.sum_user.getValue());
-    sheets.PaymentsList.getRange(row_count, pay.operation).setValue(pay.oper_user.getValue() + ".");
-    sheets.PaymentsList.getRange(row_count, pay.history_row).setValue(his.last_fin.getValue() + 1);
+    Payments._rangeExecute( { method:"setValue",
+                                         rows:[row_count], 
+                                         cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
+                                         values:["x", today, pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
+                                                his.last_fin.getValue() + 1 ]   
+                                        })
+
 
     // Добавляет запись на лист "История" (Финансы)
     text = pay.oper_user.getValue();
