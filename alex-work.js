@@ -8,27 +8,28 @@ var shift_data = 8;
 
 // Переменные для листов
 
-var ss = SpreadsheetApp.getActiveSpreadsheet();
+var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 var sheets = {
-    ActiveList: ss.getActiveSheet(), // Текущий лист
-    BalanceList: ss.getSheetByName("Баланс"), // Лист "Баланс"
-    DataList: ss.getSheetByName("Данные"), // Лист "Данные"
-    PurchaseList: ss.getSheetByName("Закупка"), // Лист "Закупка"
-    PaymentsList: ss.getSheetByName("Платежи"), // Лист "Платежи"
-    ExportList: ss.getSheetByName("Экспорт"), // Лист "Зкспорт"
-    WarehouseList: ss.getSheetByName("Склад"), // Лист "Склад"
-    SettingsList: ss.getSheetByName("Настройки"), // Лист "Настройка"
-    HistoryList: ss.getSheetByName("История")
+    ActiveList: activeSpreadsheet.getActiveSheet(), // Текущий лист
+    BalanceList: activeSpreadsheet.getSheetByName("Баланс"), // Лист "Баланс"
+    DataList: activeSpreadsheet.getSheetByName("Данные"), // Лист "Данные"
+    PurchaseList: activeSpreadsheet.getSheetByName("Закупка"), // Лист "Закупка"
+    PaymentsList: activeSpreadsheet.getSheetByName("Платежи"), // Лист "Платежи"
+    ExportList: activeSpreadsheet.getSheetByName("Экспорт"), // Лист "Зкспорт"
+    WarehouseList: activeSpreadsheet.getSheetByName("Склад"), // Лист "Склад"
+    SettingsList: activeSpreadsheet.getSheetByName("Настройки"), // Лист "Настройка"
+    HistoryList: activeSpreadsheet.getSheetByName("История")
 }; // Лист "История"
 //
 
 // Переменные на листе "Настройка"
 //
-var set = {
-    last_pos: sheets.SettingsList.getRange(32, 9), // Начальная позиция (ряд) последнего заказа
-    last_num: sheets.SettingsList.getRange(32, 10)
-}; // Количество товаров в последнем заказе
-//
+var settingsValues = {
+    // Начальная позиция (ряд) последнего заказа
+    lastOrderRowIndex: sheets.SettingsList.getRange(32, 9).getValue(),
+    // Количество товаров в последнем заказе
+    lastOrderProductsCount: sheets.SettingsList.getRange(32, 10).getValue()
+};
 
 // Переменные на листе "Закупка"
 //
@@ -226,12 +227,12 @@ function onOpen() {
         name: "",
         functionName: ""
     });
-    ss.addMenu("TaoJet", menu_tao);
+    activeSpreadsheet.addMenu("TaoJet", menu_tao);
 
     // Меню разработчика
     /*var menu_dev = [];
   menu_dev.push({ name: "Загрузить данные на лист 'Баланс'", functionName: "balance_no_product" });
-  ss.addMenu("Разработка", menu_dev);*/
+  activeSpreadsheet.addMenu("Разработка", menu_dev);*/
 
     var sheet;
 
@@ -582,7 +583,7 @@ function mail_create() {
     var name = per.cli_name.getValue(); // Имя и фамилия клиента
     name = name.split(" ")[0]; // Имя клиента
     var status, url_tao, photo, article, url_order, num, num_all;
-    var link = ss.getId();
+    var link = activeSpreadsheet.getId();
     link = '<a href="https://docs.google.com/a/taojet.com/spreadsheet/pub?key=' + DocsList.getFileById(link).getId() + '&single=true&gid=0&output=html" class="underline">Балансу</a>'; // Ссылка на лист "Баланс" для этой таблички
 
     var last_r = sheets.ExportList.getLastRow();
@@ -643,7 +644,7 @@ function mail_create() {
     content_send = content + '<p style="text-align: center"><button onclick="google.script.run.mail_send()"><img src="http://cs402128.userapi.com/g44571543/a_edc642ac.jpg" width="15" height="15" alt="" style="vertical-align: middle"> Отправить</button></p>';
 
     html = HtmlService.createHtmlOutput(content_send);
-    ss.show(html); // Показывает будущее письмо для проверки
+    activeSpreadsheet.show(html); // Показывает будущее письмо для проверки
 }
 
 function mail_send() {
@@ -869,8 +870,8 @@ function balance_no_product() {
 
 function balance_order_last(cal_r) {
     var begin = cal_r + 2; // Начало блока с информацией о последнем заказе
-    var position_last = set.last_pos.getValue() + shift_data;
-    var number_last = set.last_num.getValue();
+    var position_last = settingsValues.lastOrderRowIndex + shift_data;
+    var number_last = settingsValues.lastOrderProductsCount;
     var end = position_last + number_last - 1;
 
     sheets.BalanceList.getRange(begin, 5).setFontSize(10);
@@ -890,7 +891,7 @@ function balance_order_other(cal_r) {
     var row = begin - 1;
 
     var start = shift_per + shift_data;
-    var end = set.last_pos.getValue() + shift_data - 1;
+    var end = settingsValues.lastOrderRowIndex + shift_data - 1;
 
     balance_header(row);
 
