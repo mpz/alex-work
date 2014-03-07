@@ -433,7 +433,7 @@ function showCurrentOrder() {
     var last_r = sheets.PurchaseList.getLastRow() - shift_per + 1; // Общее количество рядов без учёта "шапки"
     var selected_option = purchaseValues.ord_user.getValue(); // Выбранный пользователем заказ
 
-    var order, position, first, number, formula;
+    var position, first, number, formula;
 
     // Открывает все ряды
     sheets.PurchaseList.showRows(shift_per, last_r);
@@ -442,38 +442,44 @@ function showCurrentOrder() {
         return
     }
 
-    // Проверка на содержимое ячейки, где должны быть номера заказа
-    for (var a = shift_per; a < 59; a++) {
-        order = sheets.PurchaseList.getRange(a, purchaseValues.order_list).getValue(); // Текущий заказ из списка
-        if (order == order_id) {
-            position = sheets.PurchaseList.getRange(a, purchaseValues.article).getRowIndex(); // Позиция (ряд) на которой находится информация о заказе
-            first = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Ряд, с которого начинается заказ
-            purchaseValues.pos.setValue(position);
-            number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
-
-            // Если это не первый ряд, прячет предыдущие ряды
-            if (position != shift_per) {
-                sheets.PurchaseList.hideRows(shift_per, first - shift_per);
+    function findOrderRow(selected_option){
+        for (var a = shift_per; a < 59; a++) {
+            // Текущий заказ из списка
+            var order_id = sheets.PurchaseList.getRange(a, purchaseValues.order_list).getValue();
+            if (order_id == selected_option) {
+                return a;
             }
-
-            sheets.PurchaseList.hideRows(first + number, last_r + shift_per - first - number);
-            formula = "=SUM(R" + first + ":R" + (first + number - 1) + ")"; // Формула для рассчёта стоимости заказа
-            purchaseValues.ord_cost.setFormula(formula);
-            sheets.PurchaseList.getRange(first, purchaseValues.order_cost).setFormula(formula);
-            purchaseValues.stat_check.setFormula("=SUM(AH" + first + ":AH" + (first + number - 1) + ")");
-
-            break;
+            // Если нет совпадений по номерам заказов, удаляет формулы
+            purchaseValues.pos.clearContent();
+            purchaseValues.ord_cost.clearContent();
+            purchaseValues.stat_check.clearContent();
         }
-
-        // Если нет совпадений по номерам заказов, удаляет формулы
-        purchaseValues.pos.clearContent();
-        purchaseValues.ord_cost.clearContent();
-        purchaseValues.stat_check.clearContent();
     }
 
-    // Проверка, выбран ли заказ
-    if (first != "") {
-        status_processing_check();
+    // Проверка на содержимое ячейки, где должны быть номера заказа
+    var order_row = findOrderRow(selected_option);
+    if(order_row){
+        position = sheets.PurchaseList.getRange(a, purchaseValues.article).getRowIndex(); // Позиция (ряд) на которой находится информация о заказе
+        first = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Ряд, с которого начинается заказ
+        purchaseValues.pos.setValue(position);
+        number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
+
+        // Если это не первый ряд, прячет предыдущие ряды
+        if (position != shift_per) {
+            sheets.PurchaseList.hideRows(shift_per, first - shift_per);
+        }
+
+        sheets.PurchaseList.hideRows(first + number, last_r + shift_per - first - number);
+        formula = "=SUM(R" + first + ":R" + (first + number - 1) + ")"; // Формула для рассчёта стоимости заказа
+        purchaseValues.ord_cost.setFormula(formula);
+        sheets.PurchaseList.getRange(first, purchaseValues.order_cost).setFormula(formula);
+        purchaseValues.stat_check.setFormula("=SUM(AH" + first + ":AH" + (first + number - 1) + ")");
+
+
+        // Проверка, выбран ли заказ
+        if (first != "") {
+            status_processing_check();
+        }
     }
 }
 
