@@ -385,10 +385,9 @@ function onEdit(event) {
     }
 }
 
-// Добавление новых платежей ------------------------------------------------------------ Рабочий
+// Добавление новых платежей
 function payment_new() {
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
+    var today = Utilities.formatDate((new Date()), Session.getTimeZone(), "dd.MM.yyyy");
 
     var sheet = sheets.PaymentsList;
     var num_r = getFilledRowsCount(sheet);
