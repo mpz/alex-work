@@ -73,7 +73,7 @@ var pay = {
     // Колонки
     id: 1, // Колонка с айдишкой платежа
     date: 4, // Дата платежа
-    summ: 5, // Сумма платежа
+    sum: 5, // Сумма платежа
     operation: 7, // Операция
     history_row: 12
 }; // Пометка о положении записи об этом платеже на листе "История" (Финансы)
@@ -219,8 +219,8 @@ function onOpen() {
     // Основное меню
     var menu_tao = [];
     menu_tao.push({
-        name: "",
-        functionName: ""
+        name: "Загрузить данные на лист 'Баланс'",
+        functionName: "balance_no_product"
     });
     menu_tao.push({
         name: "",
@@ -229,12 +229,9 @@ function onOpen() {
     ss.addMenu("TaoJet", menu_tao);
 
     // Меню разработчика
-    var menu_dev = [];
-    menu_dev.push({
-        name: "Скопировать дизайн листа 'Данные'",
-        functionName: ""
-    });
-    ss.addMenu("Разработка", menu_dev);
+    /*var menu_dev = [];
+  menu_dev.push({ name: "Загрузить данные на лист 'Баланс'", functionName: "balance_no_product" });
+  ss.addMenu("Разработка", menu_dev);*/
 
     var sheet;
 
@@ -262,6 +259,8 @@ function onEdit(event) {
     var col = cell.getColumn();
     var sheet_name = sheets.act.getName();
 
+    var last_r_exp;
+
     var today = new Date();
     today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
 
@@ -276,25 +275,25 @@ function onEdit(event) {
             pay.sum_user.setValue("Введите сумму");
         } else {
             if ((col == 3) && (row == 3) && (pay.oper_user.getValue() != "Выберите операцию")) {
-                add_new_payment();
+                payment_new();
             }
         }
         if (pay.oper_user.getValue() == "") {
             pay.oper_user.setValue("Выберите операцию");
         } else {
             if ((col == 4) && (row == 3) && (pay.sum_user.getValue() != "Введите сумму")) {
-                add_new_payment();
+                payment_new();
             }
         }
 
         // Оповещение о неверном вводе платежа
-        if ((col == pay.summ) && (row > shift_pay) && (sheets.pay.getRange(row, pay.date.getValue()) == "")) {
+        if ((col == pay.sum) && (row >= shift_pay) && (sheets.pay.getRange(row, pay.date).getValue() == "")) {
             Browser.msgBox("Оповещение", "Для корректного добавления новых платежей воспользуйтесь специальной формой, расположенной вверху страницы.", Browser.Buttons.OK);
             sheets.pay.getRange(row, col).clearContent();
         }
 
         // Изменение записи на листе "История" (Финансы) при изменении суммы платежа
-        if ((col == pay.summ) && (row > shift_pay) && (sheets.pay.getRange(row, pay.id).getValue() == "x")) {
+        if ((col == pay.sum) && (row >= shift_pay) && (sheets.pay.getRange(row, pay.id).getValue() == "x")) {
             check = sheets.pay.getRange(row, pay.history_row).getValue();
             sheets.his.getRange(check, his.summ).setValue(sheets.pay.getRange(row, col).getValue());
         }
@@ -333,11 +332,14 @@ function onEdit(event) {
 
                 arr = [];
                 arr.push([whose, text]);
-                sheets.exp.getRange(last_r_exp + 1, 1, 1, 2).setValues(arr);
+                sheets.exp.getRange(exp.last_r.getValue() + 1, 1, 1, 2).setValues(arr);
 
                 arr = [];
                 arr.push([row, counter]);
-                sheets.exp.getRange(last_r_exp + 1, 5, 1, 2).setValues(arr);
+                sheets.exp.getRange(exp.last_r.getValue() + 1, 5, 1, 2).setValues(arr);
+
+                // Создаёт запись об отсутсвующем товаре на листе "Данные"
+                data_mark_no(row);
 
                 // Создаёт поментку на листе "История"
                 whose = sheets.per.getRange(row, per.order).getValue();
@@ -345,10 +347,7 @@ function onEdit(event) {
 
                 arr = [];
                 arr.push([whose, today, text, counter]);
-                sheets.his.getRange(his.last_his + 1, 5, 1, 4).setValues(arr);
-
-                // Создаёт запись об отсутсвующем товаре на листе "Данные"
-                data_mark_no(row);
+                sheets.his.getRange(his.last_his.getValue() + 1, 5, 1, 4).setValues(arr);
 
                 // Создаёт пометку на листе "История" (Финансы)
                 if (check == "Деньги возвращены") {
@@ -402,7 +401,7 @@ function payment_new() {
     // Добавляет запись о пользовательском платеже на лист "Платежи"
     sheets.pay.getRange(num_r, pay.id).setValue("x");
     sheets.pay.getRange(num_r, pay.date).setValue(today);
-    sheets.pay.getRange(num_r, pay.summ).setValue(pay.sum_user.getValue());
+    sheets.pay.getRange(num_r, pay.sum).setValue(pay.sum_user.getValue());
     sheets.pay.getRange(num_r, pay.operation).setValue(pay.oper_user.getValue() + ".");
     sheets.pay.getRange(num_r, pay.history_row).setValue(his.last_fin.getValue() + 1);
 
@@ -500,7 +499,7 @@ function status_processing_check() {
     if ((summ >= number) && (order_status == "")) {
         status_processing();
         // ------------------------------ Тут должно быть всплывающее окошко о том, что данные перенесены
-        Browser.msgBox("Обсчёт и перенос данных");
+        //Browser.msgBox("Обсчёт и перенос данных");
 
         // Проверка, есть ли в заказе отсутствующие товары
         if (summ == number) {
@@ -584,7 +583,7 @@ function mail_create() {
     name = name.split(" ")[0]; // Имя клиента
     var status, url_tao, photo, article, url_order, num, num_all;
     var link = ss.getId();
-    link = '<a href="https://docs.google.com/a/taojet.com/spreadsheet/pub?key=' + DocsList.getFileById(link).getId() + '&single=true&gid=0&output=html">Балансу</a>'; // Ссылка на лист "Баланс" для этой таблички
+    link = '<a href="https://docs.google.com/a/taojet.com/spreadsheet/pub?key=' + DocsList.getFileById(link).getId() + '&single=true&gid=0&output=html" class="underline">Балансу</a>'; // Ссылка на лист "Баланс" для этой таблички
 
     var last_r = sheets.exp.getLastRow();
     var val; // Переменная для временного хранения разных данных
@@ -614,7 +613,7 @@ function mail_create() {
             photo = '<a href="' + url_tao + '"><img src="' + photo + '" width="50" height="50" alt="На Таобао"></a>';
             url_order = sheets.per.getRange(mark_check, per.url_order).getFormula();
             url_order = url_order.split('"')[1]; // Ссылка на заказ
-            url_order = '<a href="' + url_order + '">В заказе</a>';
+            url_order = '<a href="' + url_order + '" class="underline">В заказе</a>';
 
             //no_prod = no_prod + '<tr><td>' + photo + '</td><td align="center" width="200">' + status +'</td>';
             no_prod = no_prod + '<tr><td width="50"></td><td>' + photo + '</td><td align="center" width="150">' + article + '</td><td align="center" width="100">' + url_order + '</td><td align="center" width="150">' + status + '</td><td width="50"></td>';
@@ -690,33 +689,8 @@ function status_processing() {
 
     var symbol, status;
 
-    // -------------------------------------------------------- Таймер
-    var timer_on, timer_off, time;
-    timer_on = new Date().getTime();
-
     for (a = first; a < first + number; a++) {
         status = sheets.per.getRange(a, per.status).getValue();
-        /*if (status == "В обработке") {
-      status_arr[1] = status_arr[1] + 1;
-    } else if (status == "Товар оплачен") {
-      status_arr[3] = status_arr[3] + 1;
-    } else if (status == "Возврат товара") {
-      status_arr[5] = status_arr[5] + 1;
-    } else if (status == "Деньги возвращены") {
-      status_arr[7] = status_arr[7] + 1;
-    } else if (status == "Предоставьте дополнительную информацию") {
-      status_arr[9] = status_arr[9] + 1;
-    } else if (status == "Ожидание отправки от продавца") {
-      status_arr[11] = status_arr[11] + 1;
-    } else if (status == "Отправлен на склад в Китае") {
-      status_arr[13] = status_arr[13] + 1;
-    } else if (status == "Отправлен на склад в России") {
-      status_arr[15] = status_arr[15] + 1;
-    } else if (status == "Отправлен клиенту") {
-      status_arr[17] = status_arr[17] + 1;
-    } else if (status == "Доставлен клиенту") {
-      status_arr[19] = status_arr[19] + 1;
-    }*/
 
         for (b = 1; b < 11; b++) {
             if (status == status_all[b - 1]) {
@@ -725,11 +699,6 @@ function status_processing() {
             }
         }
     }
-
-    // -------------------------------------------------------- Таймер
-    timer_off = new Date().getTime();
-    time = timer_off - timer_on;
-    Browser.msgBox(time);
 
     // Создание записей об изменениях статусов
     for (a = 1; a < 11; a++) {
@@ -852,9 +821,13 @@ function data_mark_no(row) {
     if (mark == 0) {
         sheets.data.getRange(8, data.num_no.getValue() + 1).setFormula(sheets.per.getRange(row, 8).getFormula());
 
-        arr = [];
-        arr.push(today, row, counter);
-        sheets.data.getRange(9, data.num_no + 1, 3, 1).setValues(arr);
+        /*arr = [];
+    arr.push([today, row, counter]);
+    sheets.data.getRange(9, data.num_no + 1, 3, 1).setValues(arr);*/
+
+        sheets.data.getRange(9, data.num_no.getValue() + 1).setValue(today);
+        sheets.data.getRange(10, data.num_no.getValue() + 1).setValue(row);
+        sheets.data.getRange(11, data.num_no.getValue() + 1).setValue("1");
     }
 }
 
@@ -945,5 +918,6 @@ function balance_clear() {
 function test() {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
 
+    var a = sheets.pay.getRange(10, pay.date.getValue());
 
 }
