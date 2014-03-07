@@ -146,13 +146,12 @@ function getFilledRowsCount(sheet) {
     Browser.msgBox("Ошибка в переборе массива");
 }
 
-// Выявление уникальных номеров заказов на листе "Закупка" ------------------------------- Работает
+// Выявление уникальных номеров заказов на листе "Закупка"
 function order_number() {
     var sheet = sheets.PurchaseList;
     var num_r = getFilledRowsCount(sheet);
     writeFilledRowsCount(sheet, num_r);
 
-    var a;
     var order_second_last, order_last; // Номера заказов у предпоследнего и последнего товаров
     var orders = []; // Массив для учёта данных по уникальным заказам
     var order_position; // Позиция (ряд), к которого начинается заказ
@@ -162,7 +161,7 @@ function order_number() {
     var last_r_order = 0; // Последний учтённый ряд с информацией по товарам
 
     // Вычисление длинны массива с номерами уникальных заказов
-    for (a = shift_per; a < 60; a++) {
+    for (var a = shift_per; a < 60; a++) {
         if (sheets.PurchaseList.getRange(a, purchaseValues.order_list).getValue() != "") {
             orders_len++;
         } else {
@@ -233,22 +232,18 @@ function onOpen() {
 
     // Меню разработчика
     /*var menu_dev = [];
-  menu_dev.push({ name: "Загрузить данные на лист 'Баланс'", functionName: "balance_no_product" });
-  activeSpreadsheet.addMenu("Разработка", menu_dev);*/
-
-    var sheet;
+    menu_dev.push({ name: "Загрузить данные на лист 'Баланс'", functionName: "balance_no_product" });
+    activeSpreadsheet.addMenu("Разработка", menu_dev);*/
 
     // Проверка на наличие в таблице информации о товарах
     if (purchaseValues.art_first.getValue() != "<%product_article%>") {
-        sheet = sheets.PurchaseList;
-        writeFilledRowsCount(sheet);
+        writeFilledRowsCount( sheets.PurchaseList );
         order_number();
     }
 
     // Проверка на наличие в таблице информации о платежах
     if (pay.id_first.getValue() != "<%transfer_id%>") {
-        sheet = sheets.PaymentsList;
-        writeFilledRowsCount(sheet);
+        writeFilledRowsCount(sheets.PaymentsList);
     }
 }
 
