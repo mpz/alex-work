@@ -538,7 +538,7 @@ function status_processing_check() {
     }
 }
 
-// Автоматическое проставление статусов для выбранного заказа ------------------------------------ Работает
+// Автоматическое проставление статусов для выбранного заказа
 function status_change() {
     var position = purchaseValues.pos.getValue(); // Позиция (ряд) на которой находится информация о заказе
     var first = sheets.PurchaseList.getRange(position, purchaseValues.order_pos).getValue(); // Стартовая позиция заказа
@@ -550,7 +550,7 @@ function status_change() {
 
     var mark = "1"; // Маркер статуса по умолчанию (для обычных статусов)
     var marker_check; // Проверка маркера
-    var count = 1;
+    
 
     // В зависимости от выбранного статуса задаёт метку
     if ((status_user == "Товар отсутствует") || (status_user == "Отсутствует нужный цвет / размер") || (status_user == "Возврат товара") || (status_user == "Деньги возвращены")) {
@@ -559,6 +559,7 @@ function status_change() {
         mark = "1,0099";
     }
 
+    var count = 1;
     for (var a = first; a < first + number; a++) {
         // Проверка на наличие маркера
         marker_check = sheets.PurchaseList.getRange(a, purchaseValues.status_mark).getValue();
@@ -595,12 +596,11 @@ function mail_create() {
     link = '<a href="https://docs.google.com/a/taojet.com/spreadsheet/pub?key=' + DocsList.getFileById(link).getId() + '&single=true&gid=0&output=html" class="underline">Балансу</a>'; // Ссылка на лист "Баланс" для этой таблички
 
     var last_r = sheets.ExportList.getLastRow();
-    var val; // Переменная для временного хранения разных данных
     var mark_check; // Проверка маркеров (для разделения записей об отсутствующих товарах и смене статусов)
     var mark = 0; // Переменная для определения наличия информации об отсутствующих товарах в письме
     var a;
 
-    val = sheets.ExportList.getRange(3, 1).getValue();
+    var val = sheets.ExportList.getRange(3, 1).getValue();
     greet = '<p>' + val.split("&")[0] + name + val.split("&")[2] + '</p><br>';
 
     //no_prod = '<p>' + sheets.ExportList.getRange(4, 1).getValue() + '</p><table align="center">';
