@@ -6,6 +6,9 @@ var shift_pay = 9;
 var shift_exp = 15;
 var shift_data = 8;
 
+function getTodayDate(){
+    return Utilities.formatDate((new Date()), Session.getTimeZone(), "dd.MM.yyyy");
+}
 
 function extend(Child, Parent) {
     var F = function() { }
@@ -47,7 +50,7 @@ function PaymentsSheet(title, options){
         this._rangeExecute( { method:"setValue",
                                          rows:[at_row], 
                                          cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
-                                         values:["x", today, pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
+                                         values:["x", getTodayDate(), pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
                                                 his.last_fin.getValue() + 1 ]   
                                         } )
     }
@@ -61,25 +64,6 @@ var paymentsDataCols = {
 var PaymentsList = new PaymentsSheet("Платежи", {
     attribute_cols: paymentsDataCols
 });
-
-
-
-// Переменные на листе "Платёж"
-//
-var pay = {
-    id_first: sheets.PaymentsList.getRange(shift_pay, 1), // Первая айдишка платежа
-    num_r: sheets.PaymentsList.getRange(7, 12), // Ячейка с количеством заполненных рядов
-    sum_user: sheets.PaymentsList.getRange(3, 3), // Ячейка для внесения суммы в новый пользовательский платёж
-    oper_user: sheets.PaymentsList.getRange(3, 4), // Ячейка для выбора операции в новом пользовательском платеже
-    // Колонки
-    id: 1, // Колонка с айдишкой платежа
-    date: 4, // Дата платежа
-    sum: 5, // Сумма платежа
-    operation: 7, // Операция
-    history_row: 12
-}; // Пометка о положении записи об этом платеже на листе "История" (Финансы)
-
-// [pay.id, pay.date, pay.sum, pay.operation, pay.history_row]
 
 
 
@@ -98,6 +82,23 @@ var sheets = {
     HistoryList: activeSpreadsheet.getSheetByName("История")
 }; // Лист "История"
 //
+
+
+// Переменные на листе "Платёж"
+//
+var pay = {
+    id_first: sheets.PaymentsList.getRange(shift_pay, 1), // Первая айдишка платежа
+    num_r: sheets.PaymentsList.getRange(7, 12), // Ячейка с количеством заполненных рядов
+    sum_user: sheets.PaymentsList.getRange(3, 3), // Ячейка для внесения суммы в новый пользовательский платёж
+    oper_user: sheets.PaymentsList.getRange(3, 4), // Ячейка для выбора операции в новом пользовательском платеже
+    // Колонки
+    id: 1, // Колонка с айдишкой платежа
+    date: 4, // Дата платежа
+    sum: 5, // Сумма платежа
+    operation: 7, // Операция
+    history_row: 12
+}; // Пометка о положении записи об этом платеже на листе "История" (Финансы)
+
 
 // Переменные на листе "Настройка"
 function settingsValues(){
@@ -324,9 +325,6 @@ function onEdit(event) {
 
     var last_r_exp;
 
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var check;
     var arr, text, summ, whose; // Переменные для работы с рядами
     var counter = 1;
@@ -372,7 +370,7 @@ function onEdit(event) {
             summ = sheets.PurchaseList.getRange(row, purchaseValues.delivery).getValue();
 
             arr = [];
-            arr.push([today, text, summ, counter]);
+            arr.push([getTodayDate(), text, summ, counter]);
             sheets.HistoryList.getRange(his.last_fin.getValue() + 1, 14, 1, 4).setValues(arr);
         }
 
@@ -406,7 +404,7 @@ function onEdit(event) {
                 text = 'Статус товара ' + sheets.PurchaseList.getRange(row, purchaseValues.article).getValue() + ' изменился на "' + check + '".';
 
                 arr = [];
-                arr.push([whose, today, text, counter]);
+                arr.push([whose, getTodayDate(), text, counter]);
                 sheets.HistoryList.getRange(his.last_his.getValue() + 1, 5, 1, 4).setValues(arr);
 
                 // Создаёт пометку на листе "История" (Финансы)
@@ -415,7 +413,7 @@ function onEdit(event) {
                     summ = sheets.PurchaseList.getRange(row, purchaseValues.summ_com).getValue();
 
                     arr = [];
-                    arr.push([today, text, summ, counter]);
+                    arr.push([getTodayDate(), text, summ, counter]);
                     sheets.HistoryList.getRange(his.last_fin.getValue() + 1, 14, 1, 4).setValues(arr);
                 }
             } else if (check == "") {
@@ -429,7 +427,7 @@ function onEdit(event) {
                 // Если выбран заказ и в нём что-то поменялось, то метка удаляется
                 sheets.PurchaseList.getRange(purchaseValues.pos.getValue(), purchaseValues.order_mark).clearContent();
                 // Если выбран заказ и в нём что-то поменялось, то обновляется время последнего изменения
-                sheets.PurchaseList.getRange(purchaseValues.pos.getValue(), purchaseValues.order_date).setValue(today);
+                sheets.PurchaseList.getRange(purchaseValues.pos.getValue(), purchaseValues.order_date).setValue(getTodayDate());
 
                 status_processing_check();
             }
@@ -449,8 +447,6 @@ function onEdit(event) {
 
 // Добавление новых платежей
 function addNewPayment() {
-    var today = Utilities.formatDate((new Date()), Session.getTimeZone(), "dd.MM.yyyy");
-
     var sheet = sheets.PaymentsList;
     var row_count = getFilledRowsCount(sheet);
     writeFilledRowsCount(sheet, row_count);
@@ -473,7 +469,7 @@ function addNewPayment() {
     summ = pay.sum_user.getValue();
 
     arr = [];
-    arr.push([today, text, summ, counter]);
+    arr.push([getTodayDate(), text, summ, counter]);
     sheets.HistoryList.getRange(his.last_fin.getValue() + 1, 14, 1, 4).setValues(arr);
 
     pay.sum_user.setValue("Введите сумму");
@@ -609,9 +605,6 @@ function status_change() {
     var number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
     var status_user = purchaseValues.stat_user.getValue(); // Статус для заказа, выбранный пользователем
 
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var mark = "1"; // Маркер статуса по умолчанию (для обычных статусов)
     var marker_check; // Проверка маркера
     
@@ -638,7 +631,7 @@ function status_change() {
 
     // Если замены были, происходит обновление даты последнего изменения
     if (count > 1) {
-        sheets.PurchaseList.getRange(position, purchaseValues.order_date).setValue(today);
+        sheets.PurchaseList.getRange(position, purchaseValues.order_date).setValue(getTodayDate());
     }
 
     purchaseValues.stat_user.setValue("Выберите статус");
@@ -723,9 +716,6 @@ function mail_send() {
     var arr, whose, text;
     var counter = 1;
 
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var email = "manager@taojet.com";
     //var email = purchaseValues.cli_mail.getValue(); // Электронная почта, на которую будет отправленно письмо
     var content = sheets.ExportList.getRange(3, 4).getValue(); // Текст письма
@@ -740,7 +730,7 @@ function mail_send() {
     text = "Письмо выслано клиенту.";
 
     arr = [];
-    arr.push([whose, today, text, counter]);
+    arr.push([whose, getTodayDate(), text, counter]);
     heets.his.getRange(his.last_his + 1, 5, 1, 4).setValues(arr);
 
     // --------------------------------- Заменить эту часть на всплывающе сообщение об отправке
@@ -798,9 +788,6 @@ function record_export(symbol, status) {
     var order = sheets.PurchaseList.getRange(position, purchaseValues.order_list).getValue(); // Номер заказа
     var number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue(); // Количество товаров в заказе
 
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var arr, whose, text, number;
     var counter = 1;
 
@@ -817,16 +804,13 @@ function record_history(symbol, status) {
     var order = sheets.PurchaseList.getRange(position, purchaseValues.order_list).getValue();
     var number = sheets.PurchaseList.getRange(position, purchaseValues.order_num).getValue();
 
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var arr, text;
     var counter = 1;
 
     text = 'Изменение статуса на "' + status + '" (' + symbol + ' из ' + number + ').';
 
     arr = [];
-    arr.push([order, today, text, counter]);
+    arr.push([order, getTodayDate(), text, counter]);
     sheets.HistoryList.getRange(his.last_his.getValue() + 1, 5, 1, 4).setValues(arr);
 }
 
@@ -837,16 +821,13 @@ function record_finance() {
     var order_cost = sheets.PurchaseList.getRange(position, purchaseValues.order_cost).getValue();
     order_cost = "-" + order_cost;
 
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var arr, text;
     var counter = 1;
 
     text = "Закупка товаров заказа номер " + order + ".";
 
     arr = [];
-    arr.push([today, text, order_cost, counter]);
+    arr.push([getTodayDate(), text, order_cost, counter]);
     sheets.HistoryList.getRange(his.last_fin.getValue() + 1, 14, 1, 4).setValues(arr);
 }
 
@@ -871,9 +852,6 @@ function balance_header(row) {
 
 // Добавляет пометку на лист "Данные" об отсутствующих товарах
 function data_mark_no(row) {
-    var today = new Date();
-    today = Utilities.formatDate(today, Session.getTimeZone(), "dd.MM.yyyy");
-
     var product_check; // Переменная для проверки наличия товара по его позиции (ряду)
     var mark = 0; // Переменная для определения наличия записи об отсутсвующем товаре на листе "Данные"
     var a;
@@ -885,7 +863,7 @@ function data_mark_no(row) {
     for (a = 2; a < data.num_no.getValue() + 2; a++) {
         product_check = sheets.DataList.getRange(10, a).getValue();
         if (row == product_check) {
-            sheets.DataList.getRange(9, a).setValue(today);
+            sheets.DataList.getRange(9, a).setValue(getTodayDate());
             mark = mark + 1;
             break;
         }
@@ -894,11 +872,7 @@ function data_mark_no(row) {
     if (mark == 0) {
         sheets.DataList.getRange(8, data.num_no.getValue() + 1).setFormula(sheets.PurchaseList.getRange(row, 8).getFormula());
 
-        /*arr = [];
-    arr.push([today, row, counter]);
-    sheets.DataList.getRange(9, data.num_no + 1, 3, 1).setValues(arr);*/
-
-        sheets.DataList.getRange(9, data.num_no.getValue() + 1).setValue(today);
+        sheets.DataList.getRange(9, data.num_no.getValue() + 1).setValue(getTodayDate());
         sheets.DataList.getRange(10, data.num_no.getValue() + 1).setValue(row);
         sheets.DataList.getRange(11, data.num_no.getValue() + 1).setValue("1");
     }
