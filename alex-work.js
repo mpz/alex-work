@@ -24,22 +24,37 @@ function Sheet(title, options){
 
     this.attribute_cols = options.attribute_cols;
 
-    this._rangeExecute = function(options){
-        function getPosByIndex(index, arr){
-            if(arr.length==1){
-                return arr[0];
+    function getElByIndex(index, in_items){
+        if(in_items instanceof Array){
+            if(in_items.length==1){
+                return in_items[0];
             }
-            return arr[index];
+            return in_items[index];
+        }else{
+            // тогда это хеш
+            var ind = 0;
+            for(key in in_items){
+                if(ind==index){ return in_items[key] }
+                ind++;
+            }
         }
+    }
+
+    this._rangeExecute = function(options){
+        // выполняет метод options.method для Range
         var index = 0;
         for(var ind in options.values){
-            range = this.list.getRange( getPosByIndex(index, options.rows),
-                                   getPosByIndex(index, options.cols) );
+            range = this.list.getRange( getElByIndex(index, options.rows),
+                                   getElByIndex(index, options.cols) );
             value = String(options.values[ind]);
             eval("range." + options.method + "('" + value + "')" );
             index++;
         }
     }
+}
+
+var paymentsMaskCols = {
+    col_id: 1, col_date: 4, col_amount: 5, col_transfer_type: 7, col_fl_history: 12  // это что за хистори?
 }
 
 function PaymentsSheet(title, options){
@@ -49,7 +64,7 @@ function PaymentsSheet(title, options){
     this.addPayment = function(at_row){
         this._rangeExecute( { method:"setValue",
                                          rows:[at_row], 
-                                         cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
+                                         cols: options.mask_cols,
                                          values:["x", getTodayDate(), pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
                                                 his.last_fin.getValue() + 1 ]   
                                         } )
@@ -57,12 +72,9 @@ function PaymentsSheet(title, options){
 }
 extend(PaymentsSheet, Sheet);
 
-var paymentsDataCols = {
-    col_id: 1, col_date: 4, col_amount: 5, col_transfer_type: 7, col_fl_history: 12  // это что за хистори?
-}
 
 var PaymentsList = new PaymentsSheet("Платежи", {
-    attribute_cols: paymentsDataCols
+    mask_cols: paymentsMaskCols
 });
 
 
@@ -453,14 +465,6 @@ function addNewPayment() {
 
     var arr, text, summ; // Переменные для работы с рядами
     var counter = 1;
-
-    // Добавляет запись о пользовательском платеже на лист "Платежи"
-    // PaymentsList._rangeExecute( { method:"setValue",
-    //                                     rows:[row_count], 
-    //                                     cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
-    //                                     values:["x", today, pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
-    //                                            his.last_fin.getValue() + 1 ]   
-    //                                   })
     
     PaymentsList.addPayment(row_count);
 
