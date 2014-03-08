@@ -6,9 +6,20 @@ var shift_pay = 9;
 var shift_exp = 15;
 var shift_data = 8;
 
-function Sheet(title){
+
+function extend(Child, Parent) {
+    var F = function() { }
+    F.prototype = Parent.prototype;
+    Child.prototype = new F();
+    Child.prototype.constructor = Child;
+    Child.superclass = Parent.prototype;
+}
+
+function Sheet(title, options){
     this.title = title;
     this.list = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+
+    this.attribute_cols = options.attribute_cols;
 
     this._rangeExecute = function(options){
         function getPosByIndex(index, arr){
@@ -28,7 +39,48 @@ function Sheet(title){
     }
 }
 
-Payments = new Sheet("Платежи");
+function PaymentsSheet(title, options){
+    // вызов родительского конструктора
+    PaymentsSheet.superclass.constructor.call(this, title, options)
+
+    this.addPayment = function(at_row){
+        this._rangeExecute( { method:"setValue",
+                                         rows:[at_row], 
+                                         cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
+                                         values:["x", today, pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
+                                                his.last_fin.getValue() + 1 ]   
+                                        } )
+    }
+}
+extend(PaymentsSheet, Sheet);
+
+var paymentsDataCols = {
+    col_id: 1, col_date: 4, col_amount: 5, col_transfer_type: 7, col_fl_history: 12  // это что за хистори?
+}
+
+var PaymentsList = new PaymentsSheet("Платежи", {
+    attribute_cols: paymentsDataCols
+});
+
+
+
+// Переменные на листе "Платёж"
+//
+var pay = {
+    id_first: sheets.PaymentsList.getRange(shift_pay, 1), // Первая айдишка платежа
+    num_r: sheets.PaymentsList.getRange(7, 12), // Ячейка с количеством заполненных рядов
+    sum_user: sheets.PaymentsList.getRange(3, 3), // Ячейка для внесения суммы в новый пользовательский платёж
+    oper_user: sheets.PaymentsList.getRange(3, 4), // Ячейка для выбора операции в новом пользовательском платеже
+    // Колонки
+    id: 1, // Колонка с айдишкой платежа
+    date: 4, // Дата платежа
+    sum: 5, // Сумма платежа
+    operation: 7, // Операция
+    history_row: 12
+}; // Пометка о положении записи об этом платеже на листе "История" (Финансы)
+
+// [pay.id, pay.date, pay.sum, pay.operation, pay.history_row]
+
 
 
 // Переменные для листов
@@ -90,21 +142,8 @@ var purchaseValues = {
 }; // Колонка с датой последнего изменения заказа
 //
 
-// Переменные на листе "Платёж"
-//
-var pay = {
-    id_first: sheets.PaymentsList.getRange(shift_pay, 1), // Первая айдишка платежа
-    num_r: sheets.PaymentsList.getRange(7, 12), // Ячейка с количеством заполненных рядов
-    sum_user: sheets.PaymentsList.getRange(3, 3), // Ячейка для внесения суммы в новый пользовательский платёж
-    oper_user: sheets.PaymentsList.getRange(3, 4), // Ячейка для выбора операции в новом пользовательском платеже
-    // Колонки
-    id: 1, // Колонка с айдишкой платежа
-    date: 4, // Дата платежа
-    sum: 5, // Сумма платежа
-    operation: 7, // Операция
-    history_row: 12
-}; // Пометка о положении записи об этом платеже на листе "История" (Финансы)
-//
+
+
 
 //
 var his = {
@@ -298,7 +337,7 @@ function onEdit(event) {
         if (pay.sum_user.getValue() == "") {
             pay.sum_user.setValue("Введите сумму");
         } else if ((col == 3) && (row == 3) && (pay.oper_user.getValue() != "Выберите операцию")) {
-                addNewPayment();
+            addNewPayment();
         }
 
         if (pay.oper_user.getValue() == "") {
@@ -420,13 +459,14 @@ function addNewPayment() {
     var counter = 1;
 
     // Добавляет запись о пользовательском платеже на лист "Платежи"
-    Payments._rangeExecute( { method:"setValue",
-                                         rows:[row_count], 
-                                         cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
-                                         values:["x", today, pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
-                                                his.last_fin.getValue() + 1 ]   
-                                        })
-
+    // PaymentsList._rangeExecute( { method:"setValue",
+    //                                     rows:[row_count], 
+    //                                     cols:[pay.id, pay.date, pay.sum, pay.operation, pay.history_row], 
+    //                                     values:["x", today, pay.sum_user.getValue(), pay.oper_user.getValue() + ".",
+    //                                            his.last_fin.getValue() + 1 ]   
+    //                                   })
+    
+    PaymentsList.addPayment(row_count);
 
     // Добавляет запись на лист "История" (Финансы)
     text = pay.oper_user.getValue();
