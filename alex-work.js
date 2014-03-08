@@ -53,10 +53,6 @@ function Sheet(title, options){
     }
 }
 
-var paymentsMaskCols = {
-    col_id: 1, col_date: 4, col_amount: 5, col_transfer_type: 7, col_fl_history: 12  // это что за хистори?
-}
-
 function PaymentsSheet(title, options){
     // вызов родительского конструктора
     PaymentsSheet.superclass.constructor.call(this, title, options)
@@ -72,6 +68,10 @@ function PaymentsSheet(title, options){
 }
 extend(PaymentsSheet, Sheet);
 
+// Маска: в какие колонки пишем
+var paymentsMaskCols = {
+    col_id: 1, col_date: 4, col_amount: 5, col_transfer_type: 7, col_fl_history: 12  // это что за хистори?
+}
 
 var PaymentsList = new PaymentsSheet("Платежи", {
     mask_cols: paymentsMaskCols
